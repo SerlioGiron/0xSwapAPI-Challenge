@@ -24,6 +24,57 @@ import { wethAbi } from "./abi/weth-abi";
 4. Display all sources of liquidity on Scroll
 
 */
+// Function to fetch liquidity sources and their percentages
+const fetchLiquiditySources = async () => {
+  const response = await fetch("https://api.0x.org/swap/v1/sources");
+  const data = await response.json();
+  return data.sources;
+};
+
+// Function to calculate and display liquidity sources breakdown
+const displayLiquiditySourcesBreakdown = async () => {
+  const sources = await fetchLiquiditySources();
+  const total = sources.reduce((acc, source) => acc + source.proportion, 0);
+  console.log(`${total} Sources:`);
+  sources.forEach((source) => {
+    const percentage = ((source.proportion / total) * 100).toFixed(2);
+    console.log(`${source.name}: ${percentage}%`);
+  });
+};
+
+// Function to display buy/sell tax for tokens with tax
+const displayTokenTax = async (tokenAddress) => {
+  const response = await fetch(`https://api.0x.org/swap/v1/token/${tokenAddress}`);
+  const data = await response.json();
+  if (data.tax) {
+    console.log(`Buy Token Buy Tax: ${data.tax.buy}%`);
+    // console.log(`Sell Tax: ${data.tax.sell}%`);
+  } else {
+    console.log("No tax information available for this token.");
+  }
+};
+
+// Function to monetize app with affiliate fees and surplus collection
+const monetizeApp = (quote) => {
+  const affiliateFee = 0.01; // 1% affiliate fee
+  const surplus = quote.price * affiliateFee;
+  console.log(`Affiliate Fee: ${affiliateFee * 100}%`);
+  console.log(`Surplus Collected: ${surplus}`);
+};
+
+// Display all sources of liquidity on Scroll
+const displayAllLiquiditySources = async () => {
+  const sources = await fetchLiquiditySources();
+  console.log("Liquidity sources for Scroll chain:");
+  sources.forEach((source) => {
+    console.log(source.name);
+  });
+};
+
+// Call the functions to display the required information
+await displayLiquiditySourcesBreakdown();
+await displayTokenTax(weth.address);
+await displayAllLiquiditySources();
 
 const qs = require("qs");
 
@@ -86,6 +137,8 @@ const main = async () => {
       headers,
     }
   );
+
+  console.log(await priceResponse.json());
 
   const price = await priceResponse.json();
   console.log("Fetching price to swap 0.1 WETH for wstETH");
